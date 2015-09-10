@@ -15,7 +15,6 @@ Push-Location $PsScriptRoot
 
 $files = Get-Content $FileList
 $ADList = Get-ADComputer -Filter {Enabled -eq $true} | %{$_.name} #Automatically populate list of computers with enabled AD machines
-#$ADList = Get-ADComputer -Filter {(cn -eq "js-virt-7")} | %{$_.name}
 
 #Helper function to convert local c:\somedir\some.file path to remote \\computer.local\c$\somedir\some.file path
 function ConvertLocalToRemote{ 
@@ -45,18 +44,34 @@ if(Test-Path notfound.txt){
 	Remove-Item .\notfound.txt
 }
 
+$CompObj = @{
+	'Computer'			= '';
+	'Files Found'	= @();
+	'Errors'			= '';
+}
+
+$CompList = @()
+
 foreach($comp in $ADList) {
+	$NewComp = New-Object -TypeName PSObject -Property $CompObj
+	$NewComp.Computer = $comp
+	
 	if(Test-Connection -ComputerName $comp -Count 1 -Quiet){
 		foreach ($file in $files){
 			if(Test-Path ($file | ConvertLocalToRemote -ComputerName $comp)){
-				write-warning "$file exists on $comp"
-				"$file exists on $comp" | out-file -Append foundFiles.txt
-			} else {
-				write-host "$file does not exist on $comp"
-				"$file does not exists on $comp" | out-file -Append notfound.txt
-			}
+				$NewComp.'Files Found' += $file
+			} 
 		}
+		
+	} else {
+		$NewComp.Errors = 'Cannot ping machine'
 	}
+	
+	$NewComp.'Files Found' = $NewComp.'Files Found' -join "`n"
+			
+	$CompList += $NewComp
 }
+
+return $CompList | select computer,'Files Found',Errors | sort computer
 
 Pop-Location

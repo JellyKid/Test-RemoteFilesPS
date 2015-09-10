@@ -1,2 +1,3 @@
-C:\Windows\system.ini
 C:\Windows\viruseseverywhere.exe
+C:\temp\logFile.txt
+C:\Windows\system.ini
