@@ -1,0 +1,2 @@
+C:\Windows\system.ini
+C:\Windows\viruseseverywhere.exe
